@@ -1,7 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
-
-
+from window_graph import GraphWindow
+from window_list import ListWindow
+from window_termination import TerminationWindow
 from controller_mouse import Mouse
 from controller_screen import Screen
 from app_state import AppState
