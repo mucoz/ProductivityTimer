@@ -3,57 +3,19 @@ from app_state import AppState
 from app_constants import AppConstants
 from file_compressor import HuffmanCompression
 import os
+from magnetic_window import MagneticWindow
 
 
 class ListWindow:
     def __init__(self, parent_window):
-        self.window = tk.Tk()
+        self.window = MagneticWindow(width=AppConstants.LIST_WINDOW_WIDTH, height=AppConstants.LIST_WINDOW_HEIGHT,
+                                     bgColor=AppConstants.COLOR_BLACK, x=parent_window.winfo_x(),
+                                     y=parent_window.winfo_y(), y_offset=AppConstants.COUNTDOWN_WINDOW_HEIGHT,
+                                     magnetic_threshold=AppConstants.WINDOW_SNAP_THREASHOLD)
         AppState.list_is_open = True
         self.parent_window = parent_window
         self.window.title("List Window")
-        self._adjust_window_position()
-        self._make_window_draggable()
         self._create_ui_elements()
-
-    def _adjust_window_position(self):
-        parent_x = self.parent_window.winfo_x()
-        parent_y = self.parent_window.winfo_y()
-        self.window.geometry('{}x{}+{}+{}'.format(AppConstants.LIST_WINDOW_WIDTH,
-                                                  AppConstants.LIST_WINDOW_HEIGHT,
-                                                  parent_x, parent_y + AppConstants.COUNTDOWN_WINDOW_HEIGHT))
-
-        self.window.resizable(False, False)
-        self.window.minsize(AppConstants.LIST_WINDOW_WIDTH, AppConstants.LIST_WINDOW_HEIGHT)
-        self.window.attributes('-topmost', True)
-        self.window.overrideredirect(True)
-        self.window.config(bg=AppConstants.COLOR_BLACK)
-
-    def _make_window_draggable(self):
-        self.window.bind("<ButtonPress-1>", self._start_moving_window)
-        self.window.bind("<ButtonRelease-1>", self._stop_moving_window)
-        self.window.bind("<B1-Motion>", self._on_window_move)
-
-    def _start_moving_window(self, event):
-        AppState.drag_start_x = event.x
-        AppState.drag_start_y = event.y
-
-    def _stop_moving_window(self, event):
-        AppState.drag_start_x = None
-        AppState.drag_start_y = None
-
-    def _on_window_move(self, event):
-        dx = event.x - AppState.drag_start_x
-        dy = event.y - AppState.drag_start_y
-        screen_width = self.window.winfo_screenwidth()
-        screen_height = self.window.winfo_screenheight()
-        win_width = self.window.winfo_width()
-        win_height = self.window.winfo_height()
-        win_x = self.window.winfo_x()
-        win_y = self.window.winfo_y()
-        x = win_x + dx
-        y = win_y + dy
-
-        self.window.geometry(f"+{x}+{y}")
 
     def _create_ui_elements(self):
         self.textbox_list = tk.Text(self.window, font=AppConstants.LIST_FONT,

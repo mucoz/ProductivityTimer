@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from magnetic_window import MagneticWindow
 from window_graph import GraphWindow
 from window_list import ListWindow
 from window_termination import TerminationWindow
@@ -14,63 +15,18 @@ from typing import cast
 import datetime
 import time
 
+
 class CountdownWindow:
     def __init__(self, database):
-        self.window = tk.Tk()
+        self.window = MagneticWindow(width=AppConstants.COUNTDOWN_WINDOW_WIDTH, height=AppConstants.COUNTDOWN_WINDOW_HEIGHT,
+                                     bgColor=AppConstants.COLOR_BLACK, magnetic_threshold=AppConstants.WINDOW_SNAP_THREASHOLD)
         self.window.title("Count down")
-        self._graph_window = None
-        self._list_window = None
+        self.graph_window = None
+        self.list_window = None
         self._db = database
-        self._adjust_window_position()
-        self._make_window_draggable()
         self._create_ui_elements()
         self._reset_timer()
         self._initialize_database(database)
-
-    def _adjust_window_position(self):
-        # get taskbar height. it will be used for magnetic effect
-        AppState.taskbar_height = Screen.get_taskbar_height()
-        screen_width = self.window.winfo_screenwidth()
-        screen_height = self.window.winfo_screenheight()
-        x_coordinate = screen_width//2 - AppConstants.COUNTDOWN_WINDOW_WIDTH//2
-        y_coordinate = screen_height//2 - AppConstants.COUNTDOWN_WINDOW_HEIGHT//2 - AppState.taskbar_height
-        self.window.geometry('{}x{}+{}+{}'.format(AppConstants.COUNTDOWN_WINDOW_WIDTH,
-                                                  AppConstants.COUNTDOWN_WINDOW_HEIGHT,
-                                                  x_coordinate, y_coordinate))
-
-        self.window.resizable(False, False)
-        self.window.minsize(AppConstants.COUNTDOWN_WINDOW_WIDTH, AppConstants.COUNTDOWN_WINDOW_HEIGHT)
-        self.window.attributes('-topmost', True)
-        self.window.overrideredirect(True)
-        self.window.config(bg=AppConstants.COLOR_BLACK)
-
-    def _make_window_draggable(self):
-        # bind drag and drop feature to the main window
-        self.window.bind('<ButtonPress-1>', self._start_moving_window)
-        self.window.bind('<ButtonRelease-1>', self._stop_moving_window)
-        self.window.bind('<B1-Motion>', self._on_window_move)
-
-    def _start_moving_window(self, event):
-        AppState.drag_start_x = event.x
-        AppState.drag_start_y = event.y
-
-    def _stop_moving_window(self, event):
-        AppState.drag_start_x = None
-        AppState.drag_start_y = None
-
-    def _on_window_move(self, event):
-        dx = event.x - AppState.drag_start_x
-        dy = event.y - AppState.drag_start_y
-        screen_width = self.window.winfo_screenwidth()
-        screen_height = self.window.winfo_screenheight()
-        win_width = self.window.winfo_width()
-        win_height = self.window.winfo_height()
-        win_x = self.window.winfo_x()
-        win_y = self.window.winfo_y()
-        x = win_x + dx
-        y = win_y + dy
-
-        self.window.geometry(f"+{x}+{y}")
 
     def _create_ui_elements(self):
         # styles for progressbar

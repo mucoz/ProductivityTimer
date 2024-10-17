@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import Canvas
+from magnetic_window import MagneticWindow
 from app_state import AppState
 from app_constants import AppConstants
 from typing import cast
@@ -10,13 +11,14 @@ import datetime
 
 class GraphWindow:
     def __init__(self, parent_window, database):
-        self.window = tk.Tk()
+        self.window = MagneticWindow(width=AppConstants.GRAPH_WINDOW_WIDTH, height=AppConstants.GRAPH_WINDOW_HEIGHT,
+                                     bgColor=AppConstants.COLOR_BLACK, x=parent_window.winfo_x(),
+                                     y=parent_window.winfo_y(), y_offset=AppConstants.COUNTDOWN_WINDOW_HEIGHT,
+                                     magnetic_threshold=AppConstants.WINDOW_SNAP_THRESHOLD)
         AppState.graph_is_open = True
         self.parent_window = parent_window
         self.window.title("Graph Window")
         self._get_all_work(database)
-        self._adjust_window_position()
-        self._make_window_draggable()
         self._create_ui_elements()
 
     def _get_all_work(self, database):
@@ -24,49 +26,9 @@ class GraphWindow:
         db.connect()
         eight_hours_in_seconds = 8 * 60 * 60
         data = db.fetch_data(SQLQueries.GET_ALL_WORK_COMPLETED)
-        results = [(data, round((work_completed / eight_hours_in_seconds) * 100, 1)) for date, work_completed in data]
+        results = [(date, round((work_completed / eight_hours_in_seconds) * 100, 1)) for date, work_completed in data]
         db.disconnect()
         AppState.all_work = results
-
-    def _adjust_window_position(self):
-        parent_x = self.parent_window.winfo_x()
-        parent_y = self.parent_window.winfo_y()
-        self.window.geometry('{}x{}+{}+{}'.format(AppConstants.GRAPH_WINDOW_WIDTH,
-                                                  AppConstants.GRAPH_WINDOW_HEIGHT,
-                                                  parent_x, parent_y + AppConstants.COUNTDOWN_WINDOW_HEIGHT))
-
-        self.window.resizable(False, False)
-        self.window.minsize(AppConstants.GRAPH_WINDOW_WIDTH, AppConstants.GRAPH_WINDOW_HEIGHT)
-        self.window.attributes('-topmost', True)
-        self.window.overrideredirect(True)
-        self.window.config(bg=AppConstants.COLOR_BLACK)
-
-    def _make_window_draggable(self):
-        self.window.bind("<ButtonPress-1>", self._start_moving_window)
-        self.window.bind("<ButtonRelease-1>", self._stop_moving_window)
-        self.window.bind("<B1-Motion>", self._on_window_move)
-
-    def _start_moving_window(self, event):
-        AppState.drag_start_x = event.x
-        AppState.drag_start_y = event.y
-
-    def _stop_moving_window(self, event):
-        AppState.drag_start_x = None
-        AppState.drag_start_y = None
-
-    def _on_window_move(self, event):
-        dx = event.x - AppState.drag_start_x
-        dy = event.y - AppState.drag_start_y
-        screen_width = self.window.winfo_screenwidth()
-        screen_height = self.window.winfo_screenheight()
-        win_width = self.window.winfo_width()
-        win_height = self.window.winfo_height()
-        win_x = self.window.winfo_x()
-        win_y = self.window.winfo_y()
-        x = win_x + dx
-        y = win_y + dy
-
-        self.window.geometry(f"+{x}+{y}")
 
     def _create_ui_elements(self):
         canvas = Canvas(self.window, width=180, height=200, bg=AppConstants.COLOR_BLACK, highlightthickness=0)
