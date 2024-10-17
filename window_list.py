@@ -18,12 +18,12 @@ class ListWindow:
     def _adjust_window_position(self):
         parent_x = self.parent_window.winfo_x()
         parent_y = self.parent_window.winfo_y()
-        self.window.geometry('{}x{}+{}+{}'.format(AppConstants.COUNTDOWN_WINDOW_WIDTH,
-                                                  AppConstants.COUNTDOWN_WINDOW_HEIGHT,
+        self.window.geometry('{}x{}+{}+{}'.format(AppConstants.LIST_WINDOW_WIDTH,
+                                                  AppConstants.LIST_WINDOW_HEIGHT,
                                                   parent_x, parent_y + AppConstants.COUNTDOWN_WINDOW_HEIGHT))
 
         self.window.resizable(False, False)
-        self.window.minsize(AppConstants.COUNTDOWN_WINDOW_WIDTH, AppConstants.COUNTDOWN_WINDOW_HEIGHT)
+        self.window.minsize(AppConstants.LIST_WINDOW_WIDTH, AppConstants.LIST_WINDOW_HEIGHT)
         self.window.attributes('-topmost', True)
         self.window.overrideredirect(True)
         self.window.config(bg=AppConstants.COLOR_BLACK)
