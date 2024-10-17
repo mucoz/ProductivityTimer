@@ -14,7 +14,7 @@ class GraphWindow:
         self.window = MagneticWindow(width=AppConstants.GRAPH_WINDOW_WIDTH, height=AppConstants.GRAPH_WINDOW_HEIGHT,
                                      bgColor=AppConstants.COLOR_BLACK, x=parent_window.winfo_x(),
                                      y=parent_window.winfo_y(), y_offset=AppConstants.COUNTDOWN_WINDOW_HEIGHT,
-                                     magnetic_threshold=AppConstants.WINDOW_SNAP_THRESHOLD)
+                                     magnetic_threshold=AppConstants.WINDOW_SNAP_THREASHOLD)
         AppState.graph_is_open = True
         self.parent_window = parent_window
         self.window.title("Graph Window")

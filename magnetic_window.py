@@ -8,11 +8,11 @@ class MagneticWindow(tk.Tk):
         self.taskbar_height = Screen.get_taskbar_height()
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
-        if x:
+        if x is not None:
             x_coordinate = x
         else:
             x_coordinate = screen_width // 2 - width // 2
-        if y:
+        if y is not None:
             y_coordinate = y
         else:
             y_coordinate = screen_height // 2 - height // 2 - self.taskbar_height
