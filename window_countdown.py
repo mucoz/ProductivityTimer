@@ -285,7 +285,7 @@ class CountdownWindow:
             self._reset_timer()
             self._update_todays_work(AppState.activity_done)
         if AppState.graph_is_open:
-            self.grap_window.close(e)
+            self.graph_window.close(e)
         if AppState.list_is_open:
             self.list_window.close(e)
         self.window.destroy()
