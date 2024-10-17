@@ -2,3 +2,5 @@ __pycache__/
 venv/
 .git/
 .idea/
+data.db
+list.bin
