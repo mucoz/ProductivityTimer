@@ -5,7 +5,6 @@ from window_graph import GraphWindow
 from window_list import ListWindow
 from window_termination import TerminationWindow
 from controller_mouse import Mouse
-from controller_screen import Screen
 from app_state import AppState
 from app_constants import AppConstants
 from threading import Thread
@@ -23,6 +22,7 @@ class CountdownWindow:
         self.window.title("Count down")
         self.graph_window = None
         self.list_window = None
+        self.termination_window = None  # Termination window referansı
         self._db = database
         self._create_ui_elements()
         self._reset_timer()
@@ -136,12 +136,15 @@ class CountdownWindow:
             m = int(self.text_minute.get())
             s = int(self.text_second.get())
         except ValueError:
-            self._reset_timer()
+            # GUI güncellemesini ana thread'e yönlendir
+            self.window.after(0, self._reset_timer)
             return
+        
         total_seconds = h * 3600 + m * 60 + s
         if total_seconds == 0:
-            self._reset_timer()
+            self.window.after(0, self._reset_timer)
             return
+        
         while total_seconds > 0 and AppState.timer_is_running:
             timer = datetime.timedelta(seconds=total_seconds)
             time.sleep(1)
@@ -149,14 +152,23 @@ class CountdownWindow:
             total_seconds -= 1
             remaining_time = datetime.timedelta(seconds=total_seconds)
             if AppState.timer_is_running:
-                self._update_timer(remaining_time)
+                # GUI güncellemesini ana thread'e yönlendir
+                self.window.after(0, self._update_timer, remaining_time)
                 AppState.activity_done += 1
-                self._update_activity_bar()
+                self.window.after(0, self._update_activity_bar)
+        
+        # Timer bittiğinde ana thread'e yönlendir
+        self.window.after(0, self._on_countdown_finished, total_seconds)
+    
+    def _on_countdown_finished(self, total_seconds):
+        """Countdown tamamlandığında çağrılır (ana thread'de çalışır)"""
         self._reset_timer()
         self._update_todays_work(AppState.activity_done)
+        # print(total_seconds)
+        
         if total_seconds < 1:
             # if finished completely (without reset), show break screen
-            self._finish_work_screen
+            self._finish_work_screen()
 
     def _update_timer(self, remaining_time):
         self.text_hour.delete(0, tk.END)
@@ -179,39 +191,72 @@ class CountdownWindow:
         self.label_percentage.configure(text=str(round(self.progressbar_activity["value"], 1)) + "%")
 
     def _finish_work_screen(self):
-        termination_window = TerminationWindow()
-        termination_window.display()
+        """Termination ekranını göster (ana thread'de çalışır)"""
+        try:
+            # Eğer termination penceresi zaten açık değilse oluştur
+            if not self.termination_window or not hasattr(self.termination_window, 'window') or not self.termination_window.window:
+                self.termination_window = TerminationWindow(
+                    master_window=self.window, 
+                    fullscreen_on_active_monitor_only=True
+                )
+            
+            # Ana pencereyi geçici olarak pasifleştir
+            self.window.attributes('-topmost', False)
+            
+            # Termination penceresini göster
+            self.termination_window.display()
+            
+        except Exception as e:
+            print(f"Termination penceresi gösterilirken hata: {e}")
 
     def _start_info_animation(self):
         chars = ["--", "\\", "|", "/"]
         i = 0
         while AppState.timer_is_running:
-            self.label_info.configure(text='Working... ' + chars[i])
+            # GUI güncellemesini ana thread'e yönlendir
+            self.window.after(0, self._update_info_label, 'Working... ' + chars[i])
             time.sleep(0.1)
             i += 1
             if i == 4:
                 i = 0
-        self.label_info.configure(text='Ready.')
+        self.window.after(0, self._update_info_label, 'Ready.')
+    
+    def _update_info_label(self, text):
+        """Info label'ı güncelle (ana thread'de çalışır)"""
+        self.label_info.configure(text=text)
 
     def _start_speed_animation(self):
         last_mouse_pos = Mouse.get_mouse_pos()
         last_time = time.time()
         self.progressbar_speed.start()
+        
         while AppState.timer_is_running:
             time.sleep(0.1)
             current_mouse_pos = Mouse.get_mouse_pos()
             current_time = time.time()
             speed = Mouse.calculate_speed(last_mouse_pos, current_mouse_pos, last_time, current_time)
             normalized_speed = Mouse.normalize_speed(speed, 0, 8000, 0, 100)
-            self.progressbar_speed["value"] = normalized_speed
-            if 50 < normalized_speed <= 90:
-                self.progressbar_speed["style"] = "blue.Horizontal.TProgressbar"
-            elif normalized_speed > 90:
-                self.progressbar_speed["style"] = "red.Horizontal.TProgressbar"
-            else:
-                self.progressbar_speed["style"] = "green.Horizontal.TProgressbar"
+            
+            # GUI güncellemesini ana thread'e yönlendir
+            self.window.after(0, self._update_speed_bar, normalized_speed)
+            
             last_mouse_pos = current_mouse_pos
             last_time = current_time
+        
+        self.window.after(0, self._stop_speed_bar)
+    
+    def _update_speed_bar(self, normalized_speed):
+        """Speed bar'ı güncelle (ana thread'de çalışır)"""
+        self.progressbar_speed["value"] = normalized_speed
+        if 50 < normalized_speed <= 90:
+            self.progressbar_speed["style"] = "blue.Horizontal.TProgressbar"
+        elif normalized_speed > 90:
+            self.progressbar_speed["style"] = "red.Horizontal.TProgressbar"
+        else:
+            self.progressbar_speed["style"] = "green.Horizontal.TProgressbar"
+    
+    def _stop_speed_bar(self):
+        """Speed bar'ı durdur (ana thread'de çalışır)"""
         self.progressbar_speed.stop()
 
     def _reset_timer(self):
@@ -273,5 +318,3 @@ class CountdownWindow:
 
     def display(self):
         self.window.mainloop()
-
-

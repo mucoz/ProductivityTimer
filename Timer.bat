@@ -1,0 +1,1 @@
+CALL C:/Python39/python.exe main.py
